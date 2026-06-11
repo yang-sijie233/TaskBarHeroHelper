@@ -414,8 +414,8 @@ class StyledScrollbar(tk.Canvas):
         self.bind("<ButtonRelease-1>", self._on_release)
 
     def set(self, first: float, last: float) -> None:
-        self._first = first
-        self._last = last
+        self._first = float(first)
+        self._last = float(last)
         self._draw()
 
     def _draw(self) -> None:

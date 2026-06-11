@@ -1,0 +1,39 @@
+version: 1
+template: null
+ui:
+  chapter_tabs: {}
+  difficulty_dropdown:
+  - 0.5
+  - 0.15
+  difficulty_options: {}
+  map_scroll_area:
+  - 0.5
+  - 0.55
+  scroll_clicks_down_to_1_7: 5
+  scroll_clicks_up_to_8_10: 5
+  scroll_method: sendinput
+  scroll_interval: 0.06
+  action_delay: 0.35
+stages: []
+chest_open:
+  enabled: false
+  rel: [0.5, 0.2]
+  delay_before: 0.3
+  delay_after: 0.5
+  interval_seconds: 0.0
+  click_interval: 0.12
+  click_method: auto
+  focus_delay: 0.2
+  move_delay: 0.08
+  click_hold: 0.05
+normal_chest:
+  enabled: false
+  rel: [0.5, 0.5]
+  delay_before: 0.3
+  delay_after: 0.5
+  interval_seconds: 900
+  click_interval: 0.12
+  click_method: auto
+  focus_delay: 0.2
+  move_delay: 0.08
+  click_hold: 0.05
