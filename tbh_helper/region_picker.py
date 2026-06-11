@@ -1,10 +1,27 @@
-"""全屏拖拽框选屏幕区域（使用 Toplevel，不创建第二个 Tk 根窗口）。"""
+"""全屏拖拽框选屏幕区域（支持多显示器）。"""
 
 from __future__ import annotations
 
 import tkinter as tk
 
+import win32api
+
 from .anchor import AnchorRect
+
+# Windows virtual screen metrics constants
+SM_XVIRTUALSCREEN = 76
+SM_YVIRTUALSCREEN = 77
+SM_CXVIRTUALSCREEN = 78
+SM_CYVIRTUALSCREEN = 79
+
+
+def _virtual_screen_bounds() -> tuple[int, int, int, int]:
+    """返回虚拟桌面边界 (left, top, width, height)，覆盖所有显示器。"""
+    left = win32api.GetSystemMetrics(SM_XVIRTUALSCREEN)
+    top = win32api.GetSystemMetrics(SM_YVIRTUALSCREEN)
+    width = win32api.GetSystemMetrics(SM_CXVIRTUALSCREEN)
+    height = win32api.GetSystemMetrics(SM_CYVIRTUALSCREEN)
+    return left, top, width, height
 
 
 class RegionPicker:
@@ -12,29 +29,35 @@ class RegionPicker:
         self._result: AnchorRect | None = None
         self._start: tuple[int, int] | None = None
         self._rect_id: int | None = None
+        self._origin_x: int = 0
+        self._origin_y: int = 0
 
         overlay = tk.Toplevel(parent)
         overlay.title("框选区域")
-        overlay.attributes("-fullscreen", True)
         overlay.attributes("-topmost", True)
         overlay.attributes("-alpha", 0.35)
         overlay.configure(cursor="crosshair", bg="black")
         overlay.grab_set()
 
-        screen_w = overlay.winfo_screenwidth()
-        screen_h = overlay.winfo_screenheight()
+        # 覆盖虚拟桌面（所有显示器）
+        vx, vy, vw, vh = _virtual_screen_bounds()
+        self._origin_x = vx
+        self._origin_y = vy
+        overlay.geometry(f"{vw}x{vh}+{vx}+{vy}")
+        # 去掉标题栏
+        overlay.overrideredirect(True)
 
         canvas = tk.Canvas(
             overlay,
-            width=screen_w,
-            height=screen_h,
+            width=vw,
+            height=vh,
             highlightthickness=0,
             bg="black",
         )
         canvas.pack(fill=tk.BOTH, expand=True)
 
         hint_id = canvas.create_text(
-            screen_w // 2,
+            vw // 2,
             40,
             text=hint,
             fill="yellow",
@@ -57,10 +80,10 @@ class RegionPicker:
             if self._rect_id is not None:
                 canvas.delete(self._rect_id)
             self._rect_id = canvas.create_rectangle(
-                event.x_root,
-                event.y_root,
-                event.x_root,
-                event.y_root,
+                event.x_root - vx,
+                event.y_root - vy,
+                event.x_root - vx,
+                event.y_root - vy,
                 outline="#00ff88",
                 width=3,
             )
@@ -69,7 +92,13 @@ class RegionPicker:
             if self._start is None or self._rect_id is None:
                 return
             x0, y0 = self._start
-            canvas.coords(self._rect_id, x0, y0, event.x_root, event.y_root)
+            canvas.coords(
+                self._rect_id,
+                x0 - vx,
+                y0 - vy,
+                event.x_root - vx,
+                event.y_root - vy,
+            )
 
         def on_release(event):
             if self._start is None:
