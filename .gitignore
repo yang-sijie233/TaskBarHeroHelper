@@ -6,4 +6,5 @@ dist/
 *.spec.bak
 config.yaml
 profiles/
+!profiles/portal_profile.default.yaml
 *.png
