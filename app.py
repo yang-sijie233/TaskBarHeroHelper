@@ -165,8 +165,30 @@ class TBHApp(tk.Tk):
         style_log(self.log_text)
 
     def _build_setup_page(self, parent: tk.Frame) -> None:
-        scroll_outer = tk.Frame(parent, bg=BG)
-        scroll_outer.pack(fill=tk.BOTH, expand=True)
+        # 可滚动容器 Canvas + Scrollbar
+        canvas = tk.Canvas(parent, bg=BG, highlightthickness=0)
+        v_scroll = tk.Scrollbar(parent, orient=tk.VERTICAL, command=canvas.yview)
+        scrollable = tk.Frame(canvas, bg=BG)
+        scrollable.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        canvas_window = canvas.create_window((0, 0), window=scrollable, anchor="nw", width=parent.winfo_width())
+
+        def _configure_canvas(event):
+            canvas.itemconfig(canvas_window, width=event.width)
+        canvas.bind("<Configure>", _configure_canvas)
+
+        canvas.configure(yscrollcommand=v_scroll.set)
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        v_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        # 鼠标滚轮绑定（跨平台）
+        def _on_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        canvas.bind("<MouseWheel>", _on_mousewheel)
+        # Linux 支持
+        canvas.bind("<Button-4>", lambda e: canvas.yview_scroll(-3, "units"))
+        canvas.bind("<Button-5>", lambda e: canvas.yview_scroll(3, "units"))
+
+        scroll_outer = scrollable
 
         # 步骤 1
         self.step_anchor = StepRow(scroll_outer, 1, "框选传送门", "拖拽选中地图面板区域")
