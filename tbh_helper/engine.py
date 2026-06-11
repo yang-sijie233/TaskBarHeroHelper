@@ -14,6 +14,7 @@ from tbh_helper.chest_open import ChestOpenConfig, open_chest
 from tbh_helper.config_loader import build_rotator, profile_path_from_cfg
 from tbh_helper.log_watcher import DetectConfig, LogTailWatcher, box_type_label, wait_for_log
 from tbh_helper.profile import PortalProfile
+from tbh_helper.rotator import MapRotator
 from tbh_helper.statistics import StatisticsTracker
 from tbh_helper.window import expand_path, find_game_window
 
@@ -50,8 +51,10 @@ class RotatorEngine:
 
         self._thread: threading.Thread | None = None
         self._stop = threading.Event()
+        self._manual_switch = threading.Event()
         self._anchor: AnchorRect | None = None
         self._profile: PortalProfile | None = None
+        self._rotator: MapRotator | None = None
         self._dry_run = False
         self._switch_count = 0
         self._running = False
@@ -109,6 +112,12 @@ class RotatorEngine:
         if self._thread and self._thread.is_alive():
             self._thread.join(timeout=2.0)
         self._thread = None
+
+    def switch_now(self) -> None:
+        """请求立即切换到下一关（线程安全）。"""
+        if not self._running or self._dry_run:
+            return
+        self._manual_switch.set()
 
     def _run_loop(self) -> None:
         old_stdout = sys.stdout
@@ -185,6 +194,8 @@ class RotatorEngine:
                 self.on_stats_update()
                 time.sleep(rotator.delay_after_switch)
 
+            self._rotator = rotator
+
         while not self._stop.is_set():
             if (
                 rotator
@@ -253,6 +264,20 @@ class RotatorEngine:
                 self.stats.enter_stage(target.name)
                 self.on_stats_update()
                 self.on_switch(target.name, self._switch_count)
+
+            # 手动切关请求（点击「下一关」按钮）
+            if self._manual_switch.is_set():
+                self._manual_switch.clear()
+                if rotator:
+                    self.log("[手动切关] 切换到下一关…")
+                    try:
+                        target = rotator.switch_to_next()
+                        self._switch_count += 1
+                        self.stats.enter_stage(target.name)
+                        self.on_stats_update()
+                        self.on_switch(target.name, self._switch_count)
+                    except Exception as exc:
+                        self.log(f"[手动切关] 失败: {exc}")
 
             time.sleep(self.poll_interval)
 

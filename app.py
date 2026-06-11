@@ -143,8 +143,17 @@ class TBHApp(tk.Tk):
         btn_row = tk.Frame(parent, bg=BG)
         btn_row.pack(fill=tk.X, pady=(0, 12))
 
-        self.btn_start = RoundedButton(btn_row, "开始挂机", self._start, width=200, height=44, radius=14)
-        self.btn_start.pack(pady=(4, 0))
+        inner_row = tk.Frame(btn_row, bg=BG)
+        inner_row.pack()
+
+        self.btn_start = RoundedButton(inner_row, "开始挂机", self._start, width=200, height=44, radius=14)
+        self.btn_start.pack(side=tk.LEFT)
+
+        self.btn_next = RoundedButton(
+            inner_row, "下一关", self._next_stage, width=88, height=44, radius=14, style="secondary"
+        )
+        self.btn_next.pack(side=tk.LEFT, padx=(10, 0))
+        self.btn_next.configure_state(tk.DISABLED)
 
         log_card = Card(parent, padding=0)
         log_card.pack(fill=tk.BOTH, expand=True)
@@ -1103,6 +1112,7 @@ class TBHApp(tk.Tk):
             (self.btn_pick, not running),
         ):
             btn.configure_state(tk.NORMAL if enabled else tk.DISABLED)
+        self.btn_next.configure_state(tk.NORMAL if running else tk.DISABLED)
         text = "停止挂机" if running else "开始挂机"
         self.btn_start.configure(text=text)
         self.btn_start.configure_state(tk.NORMAL)
@@ -1166,6 +1176,13 @@ class TBHApp(tk.Tk):
         self.engine.stop()
         self._set_running(False)
         self._append_log(f">>> 已停止，换图 {self.engine.switch_count} 次")
+
+    def _next_stage(self) -> None:
+        """手动请求切换到下一关。"""
+        if not self.engine.is_running:
+            return
+        self.engine.switch_now()
+        self._append_log(">>> 请求切换到下一关")
 
     def on_close(self) -> None:
         if self.engine.is_running:
