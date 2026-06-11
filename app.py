@@ -45,7 +45,7 @@ from tbh_helper.ui_theme import (
     style_option_menu,
 )
 from tbh_helper.mouse import click_at
-from tbh_helper.paths import app_dir, ensure_runtime_files
+from tbh_helper.paths import app_dir, ensure_runtime_files, prompt_vc_runtime
 from tbh_helper.window import (
     find_game_window,
     get_client_rect_screen,
@@ -90,6 +90,7 @@ class TBHApp(tk.Tk):
         self._wizard_idx = 0
 
         self._build_ui()
+        prompt_vc_runtime(self)
         self._check_elevation()
         self._refresh_status()
         self._refresh_setup_steps()
