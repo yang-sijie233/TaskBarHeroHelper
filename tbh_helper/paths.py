@@ -97,3 +97,106 @@ def ensure_runtime_files() -> Path:
             shutil.copy2(src, profile)
 
     return base
+
+
+VC_REDIST_URL = "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+"""Visual C++ Redistributable for Visual Studio 2015-2022 (x64)。"""
+
+
+def check_vc_runtime() -> bool:
+    """检测 VC++ 运行库是否可用。
+
+    尝试加载 vcruntime140.dll（2015-2022 Redistributable 的核心文件），
+    加载失败说明系统缺少必要的运行库。
+    """
+    try:
+        import ctypes
+        ctypes.windll.LoadLibrary("vcruntime140.dll")
+        return True
+    except Exception:
+        return False
+
+
+def prompt_vc_runtime(parent) -> None:
+    """如果缺少 VC++ 运行库，弹出提示并可选跳转下载页。"""
+    if check_vc_runtime():
+        return
+    try:
+        import tkinter as tk
+
+        dlg = tk.Toplevel(parent)
+        dlg.title("缺少 VC++ 运行库")
+        dlg.configure(bg="#0C0C0C")
+        dlg.resizable(False, False)
+        dlg.transient(parent)
+        dlg.grab_set()
+
+        tk.Label(
+            dlg,
+            text="检测到系统缺少 Visual C++ 运行库",
+            font=("Microsoft YaHei UI", 12, "bold"),
+            bg="#0C0C0C",
+            fg="#ECECEC",
+        ).pack(padx=24, pady=(20, 8))
+
+        tk.Label(
+            dlg,
+            text=(
+                "本软件依赖 Microsoft Visual C++ Redistributable\n"
+                "(Visual Studio 2015-2022)\n\n"
+                "请点击下方按钮下载安装后重启本软件"
+            ),
+            font=("Microsoft YaHei UI", 10),
+            bg="#0C0C0C",
+            fg="#8A8A8A",
+            justify="center",
+        ).pack(padx=24, pady=(0, 16))
+
+        btn_row = tk.Frame(dlg, bg="#0C0C0C")
+        btn_row.pack(pady=(0, 20))
+
+        def download():
+            import webbrowser
+            webbrowser.open(VC_REDIST_URL)
+            dlg.destroy()
+
+        def skip():
+            dlg.destroy()
+
+        tk.Button(
+            btn_row,
+            text="下载并安装",
+            command=download,
+            bg="#9B2335",
+            fg="#FFFFFF",
+            activebackground="#B82E45",
+            activeforeground="#FFFFFF",
+            font=("Microsoft YaHei UI", 10),
+            relief="flat",
+            padx=16,
+            pady=6,
+            cursor="hand2",
+        ).pack(side=tk.LEFT, padx=(0, 10))
+
+        tk.Button(
+            btn_row,
+            text="跳过（不推荐）",
+            command=skip,
+            bg="#1E1E1E",
+            fg="#8A8A8A",
+            activebackground="#282828",
+            activeforeground="#ECECEC",
+            font=("Microsoft YaHei UI", 10),
+            relief="flat",
+            padx=16,
+            pady=6,
+            cursor="hand2",
+        ).pack(side=tk.LEFT)
+
+        dlg.update_idletasks()
+        x = parent.winfo_x() + (parent.winfo_width() - dlg.winfo_width()) // 2
+        y = parent.winfo_y() + (parent.winfo_height() - dlg.winfo_height()) // 2
+        dlg.geometry(f"+{x}+{y}")
+        parent.wait_window(dlg)
+    except Exception:
+        pass
