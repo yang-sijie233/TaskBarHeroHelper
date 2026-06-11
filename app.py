@@ -6,7 +6,7 @@ import queue
 import sys
 import tkinter as tk
 from pathlib import Path
-from tkinter import messagebox, scrolledtext, ttk
+from tkinter import messagebox, ttk
 
 from tbh_helper.config_loader import load_config, profile_path_from_cfg, save_config
 from tbh_helper.portal import PortalNavigator, StageTarget
@@ -33,6 +33,7 @@ from tbh_helper.ui_theme import (
     StatusPill,
     StepRow,
     StyledScrollbar,
+    StyledScrolledText,
     SURFACE,
     SURFACE2,
     TEXT,
@@ -161,9 +162,9 @@ class TBHApp(tk.Tk):
         tk.Label(log_card, text="  日志", font=FONT_UI, bg=SURFACE, fg=GOLD, anchor=tk.W).pack(
             fill=tk.X, padx=12, pady=(10, 0)
         )
-        self.log_text = scrolledtext.ScrolledText(log_card, height=10, state=tk.DISABLED, wrap=tk.WORD)
+        self.log_text = StyledScrolledText(log_card, height=10, state=tk.DISABLED, wrap=tk.WORD)
         self.log_text.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
-        style_log(self.log_text)
+        style_log(self.log_text.text)
 
     def _build_setup_page(self, parent: tk.Frame) -> None:
         # 可滚动容器 Canvas + Scrollbar
@@ -1105,10 +1106,11 @@ class TBHApp(tk.Tk):
         self._log_queue.put(msg)
 
     def _append_log(self, msg: str) -> None:
-        self.log_text.configure(state=tk.NORMAL)
-        self.log_text.insert(tk.END, msg + "\n")
-        self.log_text.see(tk.END)
-        self.log_text.configure(state=tk.DISABLED)
+        txt = self.log_text.text
+        txt.configure(state=tk.NORMAL)
+        txt.insert(tk.END, msg + "\n")
+        txt.see(tk.END)
+        txt.configure(state=tk.DISABLED)
 
     def _drain_log_queue(self) -> None:
         try:

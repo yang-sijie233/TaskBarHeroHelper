@@ -461,3 +461,16 @@ class StyledScrollbar(tk.Canvas):
 
     def _on_release(self, event) -> None:
         self._dragging = False
+
+
+class StyledScrolledText(tk.Frame):
+    """带深色自定义滚动条的文本框，替换 ScrolledText。"""
+
+    def __init__(self, parent: tk.Misc, **kwargs) -> None:
+        super().__init__(parent, bg=BG)
+        self.text = tk.Text(self, **kwargs)
+        self.scrollbar = StyledScrollbar(self, command=self.text.yview)
+        self.text.configure(yscrollcommand=self.scrollbar.set)
+
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        self.text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
