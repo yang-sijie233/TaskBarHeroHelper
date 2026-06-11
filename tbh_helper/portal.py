@@ -76,13 +76,9 @@ class PortalNavigator:
         self.open_portal = open_portal
         self.portal_button_rel = portal_button_rel
         self.portal_button_space = portal_button_space
-        self._chapter: int | None = None
-        self._difficulty: Difficulty | None = None
         self._scroll_page: int | None = None
 
     def reset_state(self) -> None:
-        self._chapter = None
-        self._difficulty = None
         self._scroll_page = None
 
     def _screen(self, rel_x: float, rel_y: float) -> tuple[int, int]:
@@ -135,25 +131,18 @@ class PortalNavigator:
         time.sleep(0.5)
 
     def select_chapter(self, chapter: int) -> None:
-        if self._chapter == chapter:
-            return
         tab = self.ui.chapter_tabs.get(chapter)
         if not tab:
             raise ValueError(f"未配置第 {chapter} 章标签坐标")
         self._click_rel(*tab)
-        self._chapter = chapter
         self._scroll_page = None
 
     def select_difficulty(self, difficulty: Difficulty) -> None:
-        if self._difficulty == difficulty:
-            return
         self._click_rel(*self.ui.difficulty_dropdown)
         option = self.ui.difficulty_options.get(difficulty)
         if not option:
             raise ValueError(f"未配置难度 {difficulty} 选项坐标")
         self._click_rel(*option)
-        self._difficulty = difficulty
-        self._chapter = None
         self._scroll_page = None
 
     def set_scroll_page(self, page: int) -> None:
