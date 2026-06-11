@@ -32,6 +32,7 @@ from tbh_helper.ui_theme import (
     SegmentedControl,
     StatusPill,
     StepRow,
+    StyledScrollbar,
     SURFACE,
     SURFACE2,
     TEXT,
@@ -167,7 +168,7 @@ class TBHApp(tk.Tk):
     def _build_setup_page(self, parent: tk.Frame) -> None:
         # 可滚动容器 Canvas + Scrollbar
         canvas = tk.Canvas(parent, bg=BG, highlightthickness=0)
-        v_scroll = tk.Scrollbar(parent, orient=tk.VERTICAL, command=canvas.yview)
+        v_scroll = StyledScrollbar(parent, command=canvas.yview)
         scrollable = tk.Frame(canvas, bg=BG)
         scrollable.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
         canvas_window = canvas.create_window((0, 0), window=scrollable, anchor="nw", width=parent.winfo_width())

@@ -386,3 +386,78 @@ def style_entry(widget: tk.Entry) -> None:
         highlightcolor=ACCENT,
         font=FONT_UI,
     )
+
+
+class StyledScrollbar(tk.Canvas):
+    """深色主题自定义滚动条（Canvas 绘制）。"""
+
+    THUMB_MIN = 24
+    WIDTH = 12
+
+    def __init__(self, parent: tk.Misc, *, command: Callable, **kwargs) -> None:
+        super().__init__(
+            parent,
+            width=self.WIDTH,
+            bg=BG,
+            highlightthickness=0,
+            **kwargs,
+        )
+        self._command = command
+        self._first = 0.0
+        self._last = 1.0
+        self._dragging = False
+        self._drag_start_y = 0
+        self._drag_start_first = 0.0
+
+        self.bind("<ButtonPress-1>", self._on_press)
+        self.bind("<B1-Motion>", self._on_drag)
+        self.bind("<ButtonRelease-1>", self._on_release)
+
+    def set(self, first: float, last: float) -> None:
+        self._first = first
+        self._last = last
+        self._draw()
+
+    def _draw(self) -> None:
+        self.delete("all")
+        w = self.WIDTH
+        try:
+            h = max(int(self.winfo_height()), 20)
+        except tk.TclError:
+            h = 20
+
+        # 轨道
+        self.create_rectangle(0, 0, w, h, fill=BG, outline="")
+
+        # 滑块尺寸
+        visible = self._last - self._first
+        if visible >= 1.0 or visible <= 0.0:
+            return
+        thumb_h = max(int(h * visible), self.THUMB_MIN)
+        thumb_y = int(self._first * h)
+        if thumb_y + thumb_h > h:
+            thumb_y = h - thumb_h
+
+        r = 4
+        _round_rect(self, 2, thumb_y, w - 2, thumb_y + thumb_h, r, fill=SURFACE2, outline="")
+
+    def _on_press(self, event) -> None:
+        self._dragging = True
+        self._drag_start_y = event.y_root
+        self._drag_start_first = self._first
+
+    def _on_drag(self, event) -> None:
+        if not self._dragging:
+            return
+        h = max(int(self.winfo_height()), 20)
+        visible = self._last - self._first
+        thumb_h = max(int(h * visible), self.THUMB_MIN)
+        available = h - thumb_h
+        if available <= 0:
+            return
+        dy = event.y_root - self._drag_start_y
+        new_first = max(0.0, min(1.0 - visible, self._drag_start_first + dy / available))
+        self._command("moveto", new_first)
+
+    def _on_release(self, event) -> None:
+        self._dragging = False
