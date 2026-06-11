@@ -210,6 +210,19 @@ class TBHApp(tk.Tk):
                 side=tk.LEFT, padx=(0, 4)
             )
 
+        # 标记提示
+        hint_frame = tk.Frame(stage_card.inner, bg=SURFACE)
+        hint_frame.pack(fill=tk.X, pady=(2, 0))
+        tk.Label(
+            hint_frame,
+            text="💡 1-7关拉到地图最底边标记，8-10关拉到地图最顶边标记",
+            font=FONT_UI,
+            bg=SURFACE,
+            fg=TEXT2,
+            wraplength=380,
+            justify=tk.LEFT,
+        ).pack(anchor=tk.W)
+
         # 步骤 4 — 开宝箱
         chest_card = Card(scroll_outer, padding=12)
         chest_card.pack(fill=tk.X)
